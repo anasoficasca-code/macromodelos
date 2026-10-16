@@ -1,69 +1,73 @@
 "use strict";
 
 /* ---------- Datos ----------
-   Geometría en unidades de R (radio del círculo exterior ≈ 1), centro (0,0). */
+   Jerarquía (de afuera hacia adentro):
+   Biocéntrico ⊃ Límites Ecológicos ⊃ [ Ecocéntrico ⊃ Hidrocéntrico ] → Regenerativo → Comercio Ecológico ⇄ Circularidad
+   Geometría en unidades de R (radio de referencia), centro (0,0). */
 
 const NODES = [
-  { id: "lim", name: "Límites Ecológicos", rgb: [170, 164, 146], ring: 1.0, ang: -2.35, spin: 0.028,
-    desc: "Contiene toda la estructura: fija la capacidad de carga del entorno." },
-  { id: "bio", name: "Biocéntrico", rgb: [196, 163, 105], ring: 0.9, ang: 0.85, spin: -0.036,
-    desc: "Asegura la preservación y el equilibrio de todas las formas de vida en el territorio." },
-  { id: "eco", name: "Ecocéntrico", rgb: [88, 168, 156], x: 0, y: 0, r: 0.2,
-    desc: "Punto de partida: la naturaleza como eje ordenador. Abarca a los demás macromodelos del territorio." },
-  { id: "hidro", name: "Hidrocéntrico", rgb: [96, 152, 184], x: -0.34, y: -0.22, r: 0.15,
-    desc: "El agua y la red hidrográfica son la estructura líquida que ordena todo el territorio." },
-  { id: "biocl", name: "Bioclimático", rgb: [150, 176, 125], x: 0.22, y: -0.33, r: 0.13,
-    desc: "La vegetación y los suelos permeables absorben las lluvias y regulan la temperatura de las islas de calor." },
-  { id: "regen", name: "Regenerativo", rgb: [185, 125, 98], x: -0.22, y: 0.33, r: 0.14,
-    desc: "Busca sanar el suelo pavimentado y devolverle su capacidad de vida." },
-  { id: "circ", name: "Circularidad", rgb: [214, 196, 140], x: 0.28, y: 0.26, r: 0.13,
-    desc: "Procesa los desechos del sector para reintegrarlos como nuevos insumos." }
+  { id: "bio", name: "Biocéntrico", rgb: [196, 163, 105], ring: 0.98, ang: -2.2, spin: -0.03,
+    desc: "El círculo que lo contiene todo: asegura la preservación y la salud de todas las formas de vida en Kennedy." },
+  { id: "lim", name: "Límites Ecológicos", rgb: [170, 164, 146], ring: 0.88, ang: 0.9, spin: 0.036,
+    desc: "Contiene toda la dinámica: ajusta los flujos de mercancías, el transporte de carga y la movilidad humana." },
+  { id: "eco", name: "Ecocéntrico", rgb: [88, 168, 156], x: -0.42, y: -0.2, r: 0.18, lab: null,
+    desc: "Punto de partida: abarca al Hidrocéntrico y reconoce que el agua y la red hídrica ordenan el territorio." },
+  { id: "hidro", name: "Hidrocéntrico", rgb: [96, 152, 184], x: -0.18, y: 0.06, r: 0.15, lab: -50,
+    desc: "El agua y la red hídrica son la estructura viva que ordena el territorio." },
+  { id: "regen", name: "Regenerativo", rgb: [185, 125, 98], x: 0.08, y: 0.45, r: 0.13, lab: 5,
+    desc: "Recupera el suelo pavimentado para que el agua se filtre y la vida urbana florezca." },
+  { id: "com", name: "Comercio Ecológico", rgb: [150, 176, 125], x: 0.45, y: 0.12, r: 0.17, lab: 90,
+    desc: "Reestructura el comercio mayorista, las plazas de mercado y las ventas informales para que funcionen como redes de abastecimiento limpio y no como focos de sobreexplotación." },
+  { id: "circ", name: "Circularidad", rgb: [214, 196, 140], x: 0.3, y: -0.42, r: 0.13, lab: 60,
+    desc: "Transforma el volumen masivo de residuos orgánicos en nuevos insumos para la comunidad y el suelo." }
 ];
 const byId = {};
 NODES.forEach((n, i) => { byId[n.id] = n; n.phase = i * 1.9; n.pulse = 0; });
 
-// Elementos que componen cada macromodelo (burbujas satélite)
+// Círculo del Ecocéntrico (abarca al Hidrocéntrico)
+const ECO = { x: -0.32, y: -0.08, r: 0.46 };
+
+// Elementos de cada macromodelo: [nombre, ángulo en grados (0° = derecha, 90° = abajo)]
 const SATS = {
-  hidro: ["Humedal El Burro", "Red hidrográfica", "Cuerpos de agua"],
-  biocl: ["Vegetación", "Suelos permeables", "Islas de calor"],
-  regen: ["Suelo pavimentado", "Recuperación"],
-  circ: ["Desechos", "Nuevos insumos"]
+  hidro: [["Humedal El Burro", 150], ["Red hídrica", 100], ["Cuerpos de agua", 40]],
+  regen: [["Suelo pavimentado", 200], ["Infiltración del agua", 120], ["Vida urbana", 70]],
+  com: [["Comercio mayorista", -80], ["Plazas de mercado", -35], ["Ventas informales", 10]],
+  circ: [["Residuos orgánicos", -120], ["Nuevos insumos", -50]]
 };
-const SAT_OFFSETS = [1.22, -1.22, 2.1];
 const SATELLITES = [];
 Object.keys(SATS).forEach(pid => {
-  const p = byId[pid], out = Math.atan2(p.y, p.x);
-  SATS[pid].forEach((name, i) => SATELLITES.push({ parent: p, name, base: out + SAT_OFFSETS[i], ph: i * 2.3 + p.phase }));
+  SATS[pid].forEach(([name, deg], i) => SATELLITES.push({ parent: byId[pid], name, base: deg * Math.PI / 180, ph: i * 2.3 + byId[pid].phase }));
 });
 
-// Conexiones entre macromodelos (cada una lleva gotas en los dos sentidos)
-const EDGES = [["eco", "hidro"], ["eco", "regen"], ["eco", "bio"], ["hidro", "biocl"],
-               ["biocl", "regen"], ["regen", "circ"], ["circ", "lim"], ["lim", "bio"]]
+// Vínculos (llevan gotas en ambos sentidos)
+const EDGES = [["eco", "hidro"], ["hidro", "regen"], ["regen", "com"], ["com", "circ"],
+               ["circ", "regen"], ["com", "lim"], ["com", "bio"], ["lim", "bio"]]
   .map(([a, b]) => ({ a: byId[a], b: byId[b], drops: [{ t: Math.random(), dir: 1 }, { t: Math.random(), dir: -1 }] }));
 
 const RELS = {
-  lim: [["contiene", "bio", "Toda la estructura está contenida dentro de los límites ecológicos: ninguna actividad puede superar la capacidad de carga del entorno."],
-        ["contiene", "eco", "El Ecocéntrico y todos sus macromodelos operan dentro de ese tope biofísico."]],
-  bio: [["contenido en", "lim", "Su preservación se mantiene dentro de la capacidad de carga del entorno."],
-        ["contiene", "eco", "Asegura la preservación y el equilibrio de todas las formas de vida que habitan la estructura ecocéntrica."]],
-  eco: [["abarca", "hidro", "Entiende el agua y la red hidrográfica como la estructura líquida que ordena todo el territorio."],
-        ["abarca", "regen", "Exige sanar el suelo pavimentado."],
-        ["contenido en", "bio", "El equilibrio de todas las formas de vida contiene la estructura ecocéntrica."],
-        ["contenido en", "lim", "Toda la estructura está contenida en la capacidad de carga del entorno."]],
-  hidro: [["contenido en", "eco", "Es parte de la estructura ecocéntrica: la estructura líquida que ordena el territorio."],
-          ["se articula con", "biocl", "El agua se articula con la vegetación y los suelos permeables, que absorben las lluvias."]],
-  biocl: [["se articula con", "hidro", "Recibe el agua de la red hidrográfica: la vegetación y los suelos permeables la absorben y regulan la temperatura de las islas de calor."]],
-  regen: [["se conecta con", "circ", "Para sanar el suelo pavimentado se apoya en los insumos que la circularidad reintegra al territorio."],
-          ["contenido en", "eco", "Es una de las acciones de intervención dentro del núcleo ecocéntrico."]],
-  circ: [["se conecta con", "regen", "Procesa los desechos del sector y los reintegra como nuevos insumos para sanar el suelo."],
-         ["contenido en", "eco", "Cierra los ciclos de materia dentro del núcleo ecocéntrico."]]
+  bio: [["contiene", "lim", "Toda la dinámica del territorio ocurre dentro de ella, bajo el fin de preservar la vida."],
+        ["equilibrio con", "com", "La intensidad del comercio y la economía popular coexiste en equilibrio bajo este macromodelo."]],
+  lim: [["contenido en", "bio", "Su fin último es asegurar la preservación y la salud de todas las formas de vida en Kennedy."],
+        ["contiene", "eco", "Todo el sistema ecocéntrico opera dentro de estos límites."],
+        ["ajusta", "com", "Ajusta los flujos de mercancías, el transporte de carga y la movilidad humana."]],
+  eco: [["abarca", "hidro", "Reconoce que el agua y la red hídrica son la estructura viva que ordena el territorio."],
+        ["contenido en", "lim", "La dinámica ecocéntrica se ajusta a los límites ecológicos."]],
+  hidro: [["contenido en", "eco", "Es parte del Ecocéntrico: la estructura viva que ordena el territorio."],
+          ["se articula con", "regen", "Para permitir que el agua se filtre y la vida urbana florezca, se articula con la regeneración del suelo."]],
+  regen: [["se articula con", "hidro", "Recupera el suelo pavimentado para que el agua de la red hídrica pueda filtrarse."],
+          ["se enlaza con", "com", "La recuperación del suelo se enlaza con la reestructuración del comercio."],
+          ["recibe de", "circ", "Los nuevos insumos de la circularidad alimentan el suelo."]],
+  com: [["se enlaza con", "regen", "Funciona como red de abastecimiento limpio sobre un territorio que se regenera."],
+        ["se sostiene en", "circ", "Su actividad se sostiene sobre la transformación de los residuos orgánicos en insumos."],
+        ["ajustado por", "lim", "Los flujos de mercancías, el transporte de carga y la movilidad humana quedan dentro de los límites ecológicos."],
+        ["equilibrio con", "bio", "La intensidad del comercio y la economía popular coexiste en equilibrio con la vida."]],
+  circ: [["sostiene a", "com", "Sobre el reaprovechamiento de residuos se apoya la actividad comercial."],
+         ["alimenta a", "regen", "Los nuevos insumos van a la comunidad y al suelo."]]
 };
 
 const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
 const rand = (a, b) => a + Math.random() * (b - a);
 const TAU = Math.PI * 2;
-const INNER = 0.8;  // radio del círculo ecocéntrico
-const S = 1.1;      // escala de las burbujas interiores
 
 /* ---------- Canvas ---------- */
 
@@ -93,18 +97,17 @@ function targetLayout() {
   return { cx: left + aw / 2, cy: top + ah / 2, R: Math.max(70, Math.min(aw, ah) / 2 - 18) };
 }
 
-/* posiciones vivas (px) */
 function pos(n, t) {
   if (n.ring) {
     const a = n.ang + n.spin * t;
     return { x: L.cx + Math.cos(a) * n.ring * L.R, y: L.cy + Math.sin(a) * n.ring * L.R, r: 0 };
   }
   const dx = Math.sin(t * 0.45 + n.phase) * 0.01, dy = Math.cos(t * 0.38 + n.phase * 1.3) * 0.01;
-  return { x: L.cx + (n.x * S + dx) * L.R, y: L.cy + (n.y * S + dy) * L.R, r: n.r * S * L.R * (1 + 0.015 * Math.sin(t * 0.8 + n.phase)) };
+  return { x: L.cx + (n.x + dx) * L.R, y: L.cy + (n.y + dy) * L.R, r: n.r * L.R * (1 + 0.015 * Math.sin(t * 0.8 + n.phase)) };
 }
 function satPos(s, t) {
   const p = pos(s.parent, t), a = s.base + 0.18 * Math.sin(t * 0.4 + s.ph);
-  const d = p.r + 0.082 * L.R;
+  const d = p.r + 0.08 * L.R;
   return { x: p.x + Math.cos(a) * d, y: p.y + Math.sin(a) * d, r: 0.034 * L.R };
 }
 
@@ -143,14 +146,16 @@ function frame(nowMs) {
     ctx.beginPath(); ctx.arc(d.x * W, d.y * H, d.r, 0, TAU); ctx.fill();
   });
 
-  // círculos contenedores
-  const rings = [["lim", 1.0], ["bio", 0.9], ["eco", INNER]];
-  rings.forEach(([id, rr]) => {
+  // círculos contenedores: Biocéntrico ⊃ Límites ⊃ Ecocéntrico
+  const circle = (id, x, y, r) => {
     const n = byId[id], al = related(id) ? 1 : 0.3, sel = selected === id || hover === id;
-    ctx.strokeStyle = rgba(n.rgb, (id === "eco" ? 0.7 : 0.8) * al + (sel ? 0.2 : 0));
+    ctx.strokeStyle = rgba(n.rgb, 0.78 * al + (sel ? 0.2 : 0));
     ctx.lineWidth = sel ? 3 : 2;
-    ctx.beginPath(); ctx.arc(L.cx, L.cy, rr * L.R, 0, TAU); ctx.stroke();
-  });
+    ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.stroke();
+  };
+  circle("bio", L.cx, L.cy, 0.98 * L.R);
+  circle("lim", L.cx, L.cy, 0.88 * L.R);
+  circle("eco", L.cx + ECO.x * L.R, L.cy + ECO.y * L.R, ECO.r * L.R * (1 + 0.01 * Math.sin(now * 0.7)));
 
   // vínculos con gotas
   EDGES.forEach(e => {
@@ -196,24 +201,24 @@ function frame(nowMs) {
   // burbujas principales (sólidas)
   NODES.filter(n => !n.ring).forEach(n => {
     const p = P[n.id], al = related(n.id) ? 1 : 0.3, sel = selected === n.id || hover === n.id;
-    const m = n.pulse * 0.3, bg = 0.82 * al;   // sólida: mezcla con negro al atenuar y con blanco al pulsar
+    const m = n.pulse * 0.3, bg = 0.82 * al;
     ctx.fillStyle = `rgb(${n.rgb.map(c => Math.round((c + (255 - c) * m) * bg)).join(",")})`;
     ctx.beginPath(); ctx.arc(p.x, p.y, p.r * (1 + 0.06 * n.pulse), 0, TAU); ctx.fill();
     if (sel) { ctx.strokeStyle = "rgba(245,240,225,.9)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 4, 0, TAU); ctx.stroke(); }
-    // etiqueta: dentro del eco, hacia afuera en el resto
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.font = `600 ${fs}px system-ui, sans-serif`;
     let tx = p.x, ty = p.y, col = `rgba(8,12,12,${al})`;
-    if (n.id !== "eco") {
-      const a = Math.atan2(n.y, n.x), d = p.r + fs * 0.9;
-      tx += Math.cos(a) * d; ty += Math.sin(a) * d * 0.9; col = `rgba(235,230,215,${al})`;
+    if (n.lab !== null) {
+      const a = n.lab * Math.PI / 180, cs = Math.cos(a), sn = Math.sin(a);
+      tx += cs * (p.r + 6); ty += sn * (p.r + fs * 0.75); col = `rgba(235,230,215,${al})`;
+      ctx.textAlign = cs > 0.35 ? "left" : cs < -0.35 ? "right" : "center";
       ctx.lineJoin = "round"; ctx.lineWidth = 5; ctx.strokeStyle = "#000"; ctx.strokeText(n.name, tx, ty);
     }
     ctx.fillStyle = col; ctx.fillText(n.name, tx, ty);
   });
 
   // fichas sobre los anillos
-  ["lim", "bio"].forEach(id => {
+  ["bio", "lim"].forEach(id => {
     const n = byId[id], p = P[id], al = related(id) ? 1 : 0.35, sel = selected === id || hover === id;
     const w = n.pw, h = n.ph, x = p.x - w / 2, y = p.y - h / 2;
     ctx.fillStyle = rgba(n.rgb, al);
@@ -230,18 +235,18 @@ function frame(nowMs) {
 
 function pick(x, y) {
   const t = performance.now() / 1000;
-  for (const id of ["lim", "bio"]) {
+  for (const id of ["bio", "lim"]) {
     const n = byId[id], p = pos(n, t);
     if (n.pw && Math.abs(x - p.x) < n.pw / 2 + 4 && Math.abs(y - p.y) < n.ph / 2 + 4) return id;
   }
-  for (const id of ["biocl", "circ", "regen", "hidro", "eco"]) {
+  for (const id of ["circ", "com", "regen", "hidro", "eco"]) {
     const p = pos(byId[id], t);
     if (Math.hypot(x - p.x, y - p.y) < p.r + 6) return id;
   }
+  if (Math.hypot(x - (L.cx + ECO.x * L.R), y - (L.cy + ECO.y * L.R)) < ECO.r * L.R) return "eco";
   const d = Math.hypot(x - L.cx, y - L.cy) / L.R;
-  if (d < INNER) return "eco";
-  if (d < 0.96) return "bio";
-  if (d < 1.08) return "lim";
+  if (d < 0.93) return "lim";
+  if (d < 1.08) return "bio";
   return null;
 }
 
@@ -262,7 +267,7 @@ cv.addEventListener("pointerdown", ev => {
 const panel = document.getElementById("panel");
 const chips = document.getElementById("chips");
 
-["lim", "bio", "eco", "hidro", "biocl", "regen", "circ"].forEach(id => {
+["bio", "lim", "eco", "hidro", "regen", "com", "circ"].forEach(id => {
   const n = byId[id];
   const b = document.createElement("button");
   b.type = "button"; b.className = "chip"; b.dataset.id = id;
