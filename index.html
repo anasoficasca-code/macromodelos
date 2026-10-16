@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Red de Macromodelos</title>
-<meta name="description" content="Red dinámica de siete macromodelos ecocéntricos para el territorio de Kennedy.">
+<meta name="description" content="Red de siete macromodelos ecocéntricos del territorio de Kennedy.">
 <meta name="theme-color" content="#000000">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<canvas id="net" aria-label="Estructura animada de los siete macromodelos ecocéntricos, anidados unos dentro de otros"></canvas>
+<div id="graph" aria-label="Red animada de los siete macromodelos ecocéntricos"></div>
 
 <header class="head">
   <p class="kicker">Kennedy · Humedal El Burro</p>
@@ -25,8 +25,9 @@
   <ul id="p-links"></ul>
 </aside>
 
-<p class="hint" id="hint">Toca un círculo para ver cómo se relaciona con los demás</p>
+<p class="hint" id="hint">Toca un nodo para ver sus conexiones · arrastra para moverlo · pellizca para acercar</p>
 
+<script src="vendor/force-graph.min.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
