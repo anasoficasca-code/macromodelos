@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   --text: #e8edf3;
   --muted: #8b96a5;
   --line: #222a33;
@@ -40,7 +40,7 @@ button:focus-visible { outline: 2px solid #6ea8ff; outline-offset: 2px; }
   color: var(--muted); font-size: 26px; line-height: 1; cursor: pointer; }
 .close:hover { color: var(--text); }
 
-/* mÃ³vil: hoja inferior */
+/* móvil: hoja inferior */
 .panel { left: 0; right: 0; bottom: 0; max-height: 44dvh; border-width: 1px 0 0; border-radius: 14px 14px 0 0;
   padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
 /* escritorio: tarjeta lateral */
@@ -54,4 +54,3 @@ button:focus-visible { outline: 2px solid #6ea8ff; outline-offset: 2px; }
   color: #566170; pointer-events: none; transition: opacity .4s; text-align: right; max-width: 60vw; }
 .hint.off { opacity: 0; }
 @media (max-width: 799px) { .hint { left: 16px; right: 16px; max-width: none; text-align: center; } }
-
