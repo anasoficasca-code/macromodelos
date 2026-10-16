@@ -1,28 +1,46 @@
 "use strict";
 
 /* ---------- Datos ----------
-   Geometría en unidades de R (radio del círculo exterior = 1), centro (0,0). */
+   Geometría en unidades de R (radio del círculo exterior ≈ 1), centro (0,0). */
 
 const NODES = [
-  { id: "lim", name: "Límites Ecológicos", rgb: [139, 134, 120], cx: 0, cy: 0, r: 1.0, ring: true,
+  { id: "lim", name: "Límites Ecológicos", rgb: [170, 164, 146], ring: 1.0, ang: -2.35, spin: 0.028,
     desc: "Contiene toda la estructura: fija la capacidad de carga del entorno." },
-  { id: "bio", name: "Biocéntrico", rgb: [196, 163, 105], cx: 0, cy: 0, r: 0.87, ring: true,
+  { id: "bio", name: "Biocéntrico", rgb: [196, 163, 105], ring: 0.9, ang: 0.85, spin: -0.036,
     desc: "Asegura la preservación y el equilibrio de todas las formas de vida en el territorio." },
-  { id: "eco", name: "Ecocéntrico", rgb: [78, 150, 139], cx: 0, cy: 0, r: 0.74,
+  { id: "eco", name: "Ecocéntrico", rgb: [88, 168, 156], x: 0, y: 0, r: 0.2,
     desc: "Punto de partida: la naturaleza como eje ordenador. Abarca a los demás macromodelos del territorio." },
-  { id: "hidro", name: "Hidrocéntrico", rgb: [96, 152, 184], cx: -0.22, cy: -0.14, r: 0.34,
+  { id: "hidro", name: "Hidrocéntrico", rgb: [96, 152, 184], x: -0.34, y: -0.22, r: 0.15,
     desc: "El agua y la red hidrográfica son la estructura líquida que ordena todo el territorio." },
-  { id: "biocl", name: "Bioclimático", rgb: [150, 176, 125], cx: 0.2, cy: -0.27, r: 0.24,
+  { id: "biocl", name: "Bioclimático", rgb: [150, 176, 125], x: 0.22, y: -0.33, r: 0.13,
     desc: "La vegetación y los suelos permeables absorben las lluvias y regulan la temperatura de las islas de calor." },
-  { id: "regen", name: "Regenerativo", rgb: [185, 125, 98], cx: -0.2, cy: 0.38, r: 0.23,
+  { id: "regen", name: "Regenerativo", rgb: [185, 125, 98], x: -0.22, y: 0.33, r: 0.14,
     desc: "Busca sanar el suelo pavimentado y devolverle su capacidad de vida." },
-  { id: "circ", name: "Circularidad", rgb: [214, 196, 140], cx: 0.26, cy: 0.34, r: 0.23,
+  { id: "circ", name: "Circularidad", rgb: [214, 196, 140], x: 0.28, y: 0.26, r: 0.13,
     desc: "Procesa los desechos del sector para reintegrarlos como nuevos insumos." }
 ];
 const byId = {};
-NODES.forEach((n, i) => { byId[n.id] = n; n.phase = i * 1.9; n.pulse = 0; n.amp = n.ring ? 0.004 : 0.02; });
+NODES.forEach((n, i) => { byId[n.id] = n; n.phase = i * 1.9; n.pulse = 0; });
 
-// Relaciones (para el panel)
+// Elementos que componen cada macromodelo (burbujas satélite)
+const SATS = {
+  hidro: ["Humedal El Burro", "Red hidrográfica", "Cuerpos de agua"],
+  biocl: ["Vegetación", "Suelos permeables", "Islas de calor"],
+  regen: ["Suelo pavimentado", "Recuperación"],
+  circ: ["Desechos", "Nuevos insumos"]
+};
+const SAT_OFFSETS = [1.22, -1.22, 2.1];
+const SATELLITES = [];
+Object.keys(SATS).forEach(pid => {
+  const p = byId[pid], out = Math.atan2(p.y, p.x);
+  SATS[pid].forEach((name, i) => SATELLITES.push({ parent: p, name, base: out + SAT_OFFSETS[i], ph: i * 2.3 + p.phase }));
+});
+
+// Conexiones entre macromodelos (cada una lleva gotas en los dos sentidos)
+const EDGES = [["eco", "hidro"], ["eco", "regen"], ["eco", "bio"], ["hidro", "biocl"],
+               ["biocl", "regen"], ["regen", "circ"], ["circ", "lim"], ["lim", "bio"]]
+  .map(([a, b]) => ({ a: byId[a], b: byId[b], drops: [{ t: Math.random(), dir: 1 }, { t: Math.random(), dir: -1 }] }));
+
 const RELS = {
   lim: [["contiene", "bio", "Toda la estructura está contenida dentro de los límites ecológicos: ninguna actividad puede superar la capacidad de carga del entorno."],
         ["contiene", "eco", "El Ecocéntrico y todos sus macromodelos operan dentro de ese tope biofísico."]],
@@ -44,26 +62,8 @@ const RELS = {
 const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
 const rand = (a, b) => a + Math.random() * (b - a);
 const TAU = Math.PI * 2;
-
-/* ---------- Flujos de gotas ---------- */
-
-const FLOWS = [];
-function addBez(from, to, bend, n, speed) {
-  const f = { type: "bez", from: byId[from], to: byId[to], bend, nodes: [from, to], drops: [] };
-  for (let i = 0; i < n; i++) f.drops.push({ t: i / n + rand(0, 0.05), v: speed * rand(0.85, 1.15) });
-  FLOWS.push(f);
-}
-function addOrbit(id, r, dir, n, speed, nodes) {
-  const f = { type: "orbit", id, r, dir, nodes, drops: [] };
-  for (let i = 0; i < n; i++) f.drops.push({ t: i / n + rand(0, 0.03), v: speed * rand(0.9, 1.1) });
-  FLOWS.push(f);
-}
-addBez("hidro", "biocl", 0.05, 2, 0.09);
-addBez("regen", "circ", -0.16, 2, 0.08);
-addBez("circ", "regen", -0.16, 2, 0.08);
-addOrbit("lim", 1.0, 1, 3, 0.008, ["lim"]);
-addOrbit("bio", 0.87, -1, 4, 0.011, ["bio"]);
-addOrbit("eco", 0.74, 1, 3, 0.014, ["eco"]);
+const INNER = 0.8;  // radio del círculo ecocéntrico
+const S = 1.1;      // escala de las burbujas interiores
 
 /* ---------- Canvas ---------- */
 
@@ -82,52 +82,42 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 
-const dust = Array.from({ length: 60 }, () => ({ x: Math.random(), y: Math.random(), r: rand(0.4, 1.2), s: rand(0.004, 0.014), p: Math.random() * 6 }));
+const dust = Array.from({ length: 45 }, () => ({ x: Math.random(), y: Math.random(), r: rand(0.4, 1), s: rand(0.003, 0.01), p: Math.random() * 6 }));
 
 function targetLayout() {
   const wide = W >= 800;
   const top = wide ? 118 : 104;
-  const bottom = selected && !wide ? H * 0.46 : 26;
+  const bottom = selected && !wide ? H * 0.46 : 30;
   const left = selected && wide ? 392 : 0;
   const aw = W - left, ah = H - top - bottom;
-  return { cx: left + aw / 2, cy: top + ah / 2, R: Math.max(70, Math.min(aw, ah) / 2 - 12) };
+  return { cx: left + aw / 2, cy: top + ah / 2, R: Math.max(70, Math.min(aw, ah) / 2 - 18) };
 }
 
-// centro y radio actuales (px) de un nodo, con deriva suave
-function geo(n, t) {
-  const dx = Math.sin(t * 0.5 + n.phase) * 0.008, dy = Math.cos(t * 0.42 + n.phase * 1.3) * 0.008;
-  const k = n.ring ? 0 : 1;
-  return { x: L.cx + (n.cx + dx * k) * L.R, y: L.cy + (n.cy + dy * k) * L.R, r: n.r * L.R * (1 + (n.ring ? 0 : 0.012 * Math.sin(t * 0.9 + n.phase))) };
-}
-
-function blobPath(n, g, t) {
-  ctx.beginPath();
-  const steps = n.ring ? 90 : 72;
-  for (let i = 0; i <= steps; i++) {
-    const a = i / steps * TAU;
-    const w = 1 + n.amp * (Math.sin(3 * a + t * 0.8 + n.phase) + 0.7 * Math.sin(5 * a - t * 1.1 + n.phase * 2));
-    const x = g.x + Math.cos(a) * g.r * w, y = g.y + Math.sin(a) * g.r * w;
-    i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+/* posiciones vivas (px) */
+function pos(n, t) {
+  if (n.ring) {
+    const a = n.ang + n.spin * t;
+    return { x: L.cx + Math.cos(a) * n.ring * L.R, y: L.cy + Math.sin(a) * n.ring * L.R, r: 0 };
   }
-  ctx.closePath();
+  const dx = Math.sin(t * 0.45 + n.phase) * 0.01, dy = Math.cos(t * 0.38 + n.phase * 1.3) * 0.01;
+  return { x: L.cx + (n.x * S + dx) * L.R, y: L.cy + (n.y * S + dy) * L.R, r: n.r * S * L.R * (1 + 0.015 * Math.sin(t * 0.8 + n.phase)) };
+}
+function satPos(s, t) {
+  const p = pos(s.parent, t), a = s.base + 0.18 * Math.sin(t * 0.4 + s.ph);
+  const d = p.r + 0.082 * L.R;
+  return { x: p.x + Math.cos(a) * d, y: p.y + Math.sin(a) * d, r: 0.034 * L.R };
 }
 
-const rel = id => {
-  const act = selected || hover;
-  if (!act || act === id) return true;
-  return (RELS[act] || []).some(r => r[1] === id) || (RELS[id] || []).some(r => r[1] === act);
+const act = () => selected || hover;
+const related = id => {
+  const a = act();
+  if (!a || a === id) return true;
+  return (RELS[a] || []).some(r => r[1] === id) || (RELS[id] || []).some(r => r[1] === a);
 };
 
-function flowPoint(f, t, now) {
-  if (f.type === "orbit") {
-    const g = geo(byId[f.id], now), a = -Math.PI / 2 + f.dir * t * TAU;
-    return [g.x + Math.cos(a) * L.R * f.r, g.y + Math.sin(a) * L.R * f.r];
-  }
-  const a = geo(f.from, now), b = geo(f.to, now);
-  const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy) || 1;
-  const cx = (a.x + b.x) / 2 - dy / len * len * f.bend * 2, cy = (a.y + b.y) / 2 + dx / len * len * f.bend * 2;
-  const u = 1 - t;
-  return [u * u * a.x + 2 * u * t * cx + t * t * b.x, u * u * a.y + 2 * u * t * cy + t * t * b.y, len];
+function pillSize(n, fs) {
+  ctx.font = `600 ${fs}px system-ui, sans-serif`;
+  n.pw = ctx.measureText(n.name).width + 20; n.ph = fs + 12;
 }
 
 function frame(nowMs) {
@@ -136,104 +126,101 @@ function frame(nowMs) {
   frame.last = nowMs;
 
   const tl = targetLayout();
-  if (!L.init) { Object.assign(L, tl, { init: true }); }
+  if (!L.init) Object.assign(L, tl, { init: true });
   const k = 1 - Math.exp(-dt * 6);
   L.cx += (tl.cx - L.cx) * k; L.cy += (tl.cy - L.cy) * k; L.R += (tl.R - L.R) * k;
-  NODES.forEach(n => { n.pulse = Math.max(0, n.pulse - dt * 1.5); });
+  NODES.forEach(n => { n.pulse = Math.max(0, n.pulse - dt * 1.4); });
+
+  const fs = Math.max(10, Math.min(14, L.R * 0.05));
+  const P = {}; NODES.forEach(n => { P[n.id] = pos(n, now); });
+  pillSize(byId.lim, fs); pillSize(byId.bio, fs);
 
   ctx.globalCompositeOperation = "source-over";
   ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H);
-
-  ctx.globalCompositeOperation = "lighter";
   dust.forEach(d => {
     d.y -= d.s * dt; if (d.y < 0) d.y = 1;
-    ctx.fillStyle = `rgba(160,200,190,${0.1 + 0.08 * Math.sin(now + d.p)})`;
-    ctx.beginPath(); ctx.arc(d.x * W + Math.sin(now * 0.3 + d.p) * 6, d.y * H, d.r, 0, TAU); ctx.fill();
+    ctx.fillStyle = `rgba(190,200,190,${0.07 + 0.05 * Math.sin(now + d.p)})`;
+    ctx.beginPath(); ctx.arc(d.x * W, d.y * H, d.r, 0, TAU); ctx.fill();
   });
 
-  // rellenos líquidos (la superposición suma luz)
-  NODES.forEach(n => {
-    const g = geo(n, now);
-    const al = rel(n.id) ? 1 : 0.35;
-    const p = n.pulse;
-    if (n.id === "lim") return;
-    const grad = ctx.createRadialGradient(g.x, g.y, g.r * 0.1, g.x, g.y, g.r);
-    if (n.id === "bio") {
-      // anillo de vida: banda luminosa entre Biocéntrico y Ecocéntrico
-      grad.addColorStop(0.8, rgba(n.rgb, 0)); grad.addColorStop(1, rgba(n.rgb, 0.16 * al));
-    } else if (n.id === "eco") {
-      grad.addColorStop(0, rgba(n.rgb, 0.03 * al)); grad.addColorStop(1, rgba(n.rgb, (0.14 + 0.1 * p) * al));
-    } else {
-      grad.addColorStop(0, rgba(n.rgb, (0.08 + 0.1 * p) * al)); grad.addColorStop(1, rgba(n.rgb, (0.24 + 0.14 * p) * al));
-    }
-    ctx.fillStyle = grad; blobPath(n, g, now); ctx.fill();
+  // círculos contenedores
+  const rings = [["lim", 1.0], ["bio", 0.9], ["eco", INNER]];
+  rings.forEach(([id, rr]) => {
+    const n = byId[id], al = related(id) ? 1 : 0.3, sel = selected === id || hover === id;
+    ctx.strokeStyle = rgba(n.rgb, (id === "eco" ? 0.7 : 0.8) * al + (sel ? 0.2 : 0));
+    ctx.lineWidth = sel ? 3 : 2;
+    ctx.beginPath(); ctx.arc(L.cx, L.cy, rr * L.R, 0, TAU); ctx.stroke();
   });
 
-  // contornos
-  ctx.globalCompositeOperation = "source-over";
-  NODES.forEach(n => {
-    const g = geo(n, now);
-    const al = rel(n.id) ? 1 : 0.3;
-    const sel = selected === n.id || hover === n.id;
-    ctx.strokeStyle = rgba(n.rgb, (n.ring ? 0.6 : 0.85) * al + (sel ? 0.15 : 0));
-    ctx.lineWidth = sel ? 2.6 : n.ring ? 1.4 : 1.8;
-    if (n.id === "lim") { ctx.setLineDash([2, 7]); ctx.lineDashOffset = -now * 8; }
-    blobPath(n, g, now); ctx.stroke(); ctx.setLineDash([]);
-  });
-
-  // gotas
-  ctx.globalCompositeOperation = "lighter";
-  FLOWS.forEach(f => {
-    const act = selected || hover;
-    const dim = !act || f.nodes.includes(act) ? 1 : 0.2;
-    const col = (f.type === "orbit" ? byId[f.id] : f.from).rgb;
-
-    if (f.type === "bez") {
-      // guía tenue del cauce
-      ctx.strokeStyle = rgba(col, 0.12 * dim); ctx.lineWidth = 1.2; ctx.beginPath();
-      for (let i = 0; i <= 30; i++) { const p = flowPoint(f, i / 30, now); i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); }
-      ctx.stroke();
-    }
-    f.drops.forEach(d => {
-      d.t += d.v * dt;
-      if (d.t >= 1) { d.t -= 1; if (f.type === "bez") f.to.pulse = 1; }
-      const head = flowPoint(f, d.t, now);
-      const len = f.type === "orbit" ? TAU * L.R * f.r : head[2];
-      const span = Math.min(0.3, 48 / len), trail = 10;
-      for (let i = trail; i >= 0; i--) {
-        let tt = d.t - span * i / trail;
-        if (tt < 0) { if (f.type === "bez") continue; tt += 1; }
-        const q = 1 - i / trail, p = flowPoint(f, tt, now);
-        ctx.fillStyle = rgba(col, 0.4 * q * q * dim);
-        ctx.beginPath(); ctx.arc(p[0], p[1], 0.6 + 1.9 * q, 0, TAU); ctx.fill();
+  // vínculos con gotas
+  EDGES.forEach(e => {
+    const a = P[e.a.id], b = P[e.b.id];
+    const on = !act() || e.a.id === act() || e.b.id === act();
+    ctx.strokeStyle = `rgba(200,205,195,${on ? 0.24 : 0.06})`; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+    e.drops.forEach(d => {
+      d.t += 0.1 * dt * 260 / Math.max(len, 160);
+      if (d.t >= 1) { d.t -= 1; (d.dir > 0 ? e.b : e.a).pulse = 1; }
+      const col = (d.dir > 0 ? e.a : e.b).rgb;
+      const f = t => { const u = d.dir > 0 ? t : 1 - t; return [a.x + (b.x - a.x) * u, a.y + (b.y - a.y) * u]; };
+      for (let i = 7; i >= 0; i--) {
+        const tt = d.t - i * 0.012 * 160 / Math.max(len, 160);
+        if (tt < 0) continue;
+        const q = 1 - i / 7, p = f(tt);
+        ctx.fillStyle = rgba(col, 0.5 * q * (on ? 1 : 0.25));
+        ctx.beginPath(); ctx.arc(p[0], p[1], 0.7 + 1.8 * q, 0, TAU); ctx.fill();
       }
-      const gl = ctx.createRadialGradient(head[0], head[1], 0, head[0], head[1], 8);
-      gl.addColorStop(0, rgba(col, 0.35 * dim)); gl.addColorStop(1, rgba(col, 0));
-      ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(head[0], head[1], 8, 0, TAU); ctx.fill();
-      ctx.fillStyle = `rgba(245,240,225,${0.8 * dim})`;
-      ctx.beginPath(); ctx.arc(head[0], head[1], 1.8, 0, TAU); ctx.fill();
+      const h = f(d.t);
+      ctx.fillStyle = `rgba(245,240,225,${on ? 0.9 : 0.25})`;
+      ctx.beginPath(); ctx.arc(h[0], h[1], 1.9, 0, TAU); ctx.fill();
     });
   });
 
-  // etiquetas
-  ctx.globalCompositeOperation = "source-over";
-  ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  const fs = Math.max(9.5, Math.min(15, L.R * 0.062));
-  const label = (txt, x, y, n, size, weight, upper) => {
-    const al = rel(n.id) ? 1 : 0.35;
-    ctx.font = `${weight} ${size}px system-ui, sans-serif`;
-    if (upper) txt = txt.toUpperCase();
-    ctx.lineJoin = "round"; ctx.lineWidth = 5; ctx.strokeStyle = "#000"; ctx.strokeText(txt, x, y);
-    ctx.fillStyle = `rgba(236,241,247,${al})`; ctx.fillText(txt, x, y);
-  };
-  const G = id => geo(byId[id], now);
-  label("Límites Ecológicos", G("lim").x, G("lim").y - G("lim").r, byId.lim, fs * 0.92, 600, true);
-  label("Biocéntrico", G("bio").x, G("bio").y + G("bio").r, byId.bio, fs * 0.92, 600, true);
-  label("Ecocéntrico", G("eco").x, G("eco").y - G("eco").r * 0.84, byId.eco, fs * 0.92, 600, true);
-  ["hidro", "biocl", "regen", "circ"].forEach(id => {
-    const g = G(id), n = byId[id];
-    const bump = id === "biocl" ? -g.r * 0.12 : 0;
-    label(n.name, g.x, g.y + bump, n, fs, 600, false);
+  // satélites
+  SATELLITES.forEach(s => {
+    const p = P[s.parent.id], q = satPos(s, now);
+    const al = related(s.parent.id) ? 1 : 0.25;
+    ctx.strokeStyle = rgba(s.parent.rgb, 0.45 * al); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+    ctx.fillStyle = "#000"; ctx.beginPath(); ctx.arc(q.x, q.y, q.r, 0, TAU); ctx.fill();
+    ctx.strokeStyle = rgba(s.parent.rgb, 0.85 * al); ctx.lineWidth = 1.4; ctx.stroke();
+    if (act() === s.parent.id) {
+      ctx.font = `500 ${Math.max(9.5, fs - 3)}px system-ui, sans-serif`;
+      ctx.textAlign = "center"; ctx.textBaseline = "top";
+      ctx.lineJoin = "round"; ctx.lineWidth = 4; ctx.strokeStyle = "#000"; ctx.strokeText(s.name, q.x, q.y + q.r + 3);
+      ctx.fillStyle = `rgba(200,205,195,${0.9 * al})`; ctx.fillText(s.name, q.x, q.y + q.r + 3);
+    }
+  });
+
+  // burbujas principales (sólidas)
+  NODES.filter(n => !n.ring).forEach(n => {
+    const p = P[n.id], al = related(n.id) ? 1 : 0.3, sel = selected === n.id || hover === n.id;
+    const m = n.pulse * 0.3, bg = 0.82 * al;   // sólida: mezcla con negro al atenuar y con blanco al pulsar
+    ctx.fillStyle = `rgb(${n.rgb.map(c => Math.round((c + (255 - c) * m) * bg)).join(",")})`;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r * (1 + 0.06 * n.pulse), 0, TAU); ctx.fill();
+    if (sel) { ctx.strokeStyle = "rgba(245,240,225,.9)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 4, 0, TAU); ctx.stroke(); }
+    // etiqueta: dentro del eco, hacia afuera en el resto
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.font = `600 ${fs}px system-ui, sans-serif`;
+    let tx = p.x, ty = p.y, col = `rgba(8,12,12,${al})`;
+    if (n.id !== "eco") {
+      const a = Math.atan2(n.y, n.x), d = p.r + fs * 0.9;
+      tx += Math.cos(a) * d; ty += Math.sin(a) * d * 0.9; col = `rgba(235,230,215,${al})`;
+      ctx.lineJoin = "round"; ctx.lineWidth = 5; ctx.strokeStyle = "#000"; ctx.strokeText(n.name, tx, ty);
+    }
+    ctx.fillStyle = col; ctx.fillText(n.name, tx, ty);
+  });
+
+  // fichas sobre los anillos
+  ["lim", "bio"].forEach(id => {
+    const n = byId[id], p = P[id], al = related(id) ? 1 : 0.35, sel = selected === id || hover === id;
+    const w = n.pw, h = n.ph, x = p.x - w / 2, y = p.y - h / 2;
+    ctx.fillStyle = rgba(n.rgb, al);
+    ctx.beginPath(); ctx.roundRect(x, y, w, h, h / 2); ctx.fill();
+    if (sel) { ctx.strokeStyle = "rgba(245,240,225,.9)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(x - 3, y - 3, w + 6, h + 6, (h + 6) / 2); ctx.stroke(); }
+    ctx.font = `600 ${fs}px system-ui, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillStyle = `rgba(8,12,12,${al})`; ctx.fillText(n.name, p.x, p.y + 0.5);
   });
 
   requestAnimationFrame(frame);
@@ -242,15 +229,19 @@ function frame(nowMs) {
 /* ---------- Interacción ---------- */
 
 function pick(x, y) {
-  const now = performance.now() / 1000;
-  for (const id of ["biocl", "circ", "regen", "hidro"]) {
-    const g = geo(byId[id], now);
-    if (Math.hypot(x - g.x, y - g.y) < g.r) return id;
+  const t = performance.now() / 1000;
+  for (const id of ["lim", "bio"]) {
+    const n = byId[id], p = pos(n, t);
+    if (n.pw && Math.abs(x - p.x) < n.pw / 2 + 4 && Math.abs(y - p.y) < n.ph / 2 + 4) return id;
+  }
+  for (const id of ["biocl", "circ", "regen", "hidro", "eco"]) {
+    const p = pos(byId[id], t);
+    if (Math.hypot(x - p.x, y - p.y) < p.r + 6) return id;
   }
   const d = Math.hypot(x - L.cx, y - L.cy) / L.R;
-  if (d < 0.74) return "eco";
-  if (d < 0.94) return "bio";
-  if (d < 1.1) return "lim";
+  if (d < INNER) return "eco";
+  if (d < 0.96) return "bio";
+  if (d < 1.08) return "lim";
   return null;
 }
 
