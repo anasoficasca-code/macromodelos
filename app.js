@@ -1,22 +1,22 @@
-"use strict";
+﻿"use strict";
 
 /* ---------- Datos ----------
-   Geometría en unidades de R (radio del círculo exterior = 1), centro (0,0). */
+   GeometrÃ­a en unidades de R (radio del cÃ­rculo exterior = 1), centro (0,0). */
 
 const NODES = [
-  { id: "lim", name: "Límites Ecológicos", rgb: [251, 113, 133], cx: 0, cy: 0, r: 1.0, ring: true,
+  { id: "lim", name: "LÃ­mites EcolÃ³gicos", rgb: [251, 113, 133], cx: 0, cy: 0, r: 1.0, ring: true,
     desc: "Contiene toda la estructura: fija la capacidad de carga del entorno." },
-  { id: "bio", name: "Biocéntrico", rgb: [244, 114, 182], cx: 0, cy: 0, r: 0.87, ring: true,
-    desc: "Asegura la preservación y el equilibrio de todas las formas de vida en el territorio." },
-  { id: "eco", name: "Ecocéntrico", rgb: [74, 222, 128], cx: 0, cy: 0, r: 0.74,
-    desc: "Punto de partida: la naturaleza como eje ordenador. Abarca a los demás macromodelos del territorio." },
-  { id: "hidro", name: "Hidrocéntrico", rgb: [56, 189, 248], cx: -0.22, cy: -0.14, r: 0.34,
-    desc: "El agua y la red hidrográfica son la estructura líquida que ordena todo el territorio." },
-  { id: "biocl", name: "Bioclimático", rgb: [251, 191, 36], cx: 0.2, cy: -0.27, r: 0.24,
-    desc: "La vegetación y los suelos permeables absorben las lluvias y regulan la temperatura de las islas de calor." },
-  { id: "regen", name: "Regenerativo", rgb: [190, 242, 100], cx: -0.2, cy: 0.38, r: 0.23,
+  { id: "bio", name: "BiocÃ©ntrico", rgb: [244, 114, 182], cx: 0, cy: 0, r: 0.87, ring: true,
+    desc: "Asegura la preservaciÃ³n y el equilibrio de todas las formas de vida en el territorio." },
+  { id: "eco", name: "EcocÃ©ntrico", rgb: [74, 222, 128], cx: 0, cy: 0, r: 0.74,
+    desc: "Punto de partida: la naturaleza como eje ordenador. Abarca a los demÃ¡s macromodelos del territorio." },
+  { id: "hidro", name: "HidrocÃ©ntrico", rgb: [56, 189, 248], cx: -0.22, cy: -0.14, r: 0.34,
+    desc: "El agua y la red hidrogrÃ¡fica son la estructura lÃ­quida que ordena todo el territorio." },
+  { id: "biocl", name: "BioclimÃ¡tico", rgb: [251, 191, 36], cx: 0.2, cy: -0.27, r: 0.24,
+    desc: "La vegetaciÃ³n y los suelos permeables absorben las lluvias y regulan la temperatura de las islas de calor." },
+  { id: "regen", name: "Regenerativo", rgb: [167, 139, 250], cx: -0.2, cy: 0.38, r: 0.23,
     desc: "Busca sanar el suelo pavimentado y devolverle su capacidad de vida." },
-  { id: "circ", name: "Circularidad", rgb: [167, 139, 250], cx: 0.26, cy: 0.34, r: 0.23,
+  { id: "circ", name: "Circularidad", rgb: [232, 121, 249], cx: 0.26, cy: 0.34, r: 0.23,
     desc: "Procesa los desechos del sector para reintegrarlos como nuevos insumos." }
 ];
 const byId = {};
@@ -24,21 +24,21 @@ NODES.forEach((n, i) => { byId[n.id] = n; n.phase = i * 1.9; n.pulse = 0; n.amp 
 
 // Relaciones (para el panel)
 const RELS = {
-  lim: [["contiene", "bio", "Toda la estructura está contenida dentro de los límites ecológicos: ninguna actividad puede superar la capacidad de carga del entorno."],
-        ["contiene", "eco", "El Ecocéntrico y todos sus macromodelos operan dentro de ese tope biofísico."]],
-  bio: [["contenido en", "lim", "Su preservación se mantiene dentro de la capacidad de carga del entorno."],
-        ["contiene", "eco", "Asegura la preservación y el equilibrio de todas las formas de vida que habitan la estructura ecocéntrica."]],
-  eco: [["abarca", "hidro", "Entiende el agua y la red hidrográfica como la estructura líquida que ordena todo el territorio."],
+  lim: [["contiene", "bio", "Toda la estructura estÃ¡ contenida dentro de los lÃ­mites ecolÃ³gicos: ninguna actividad puede superar la capacidad de carga del entorno."],
+        ["contiene", "eco", "El EcocÃ©ntrico y todos sus macromodelos operan dentro de ese tope biofÃ­sico."]],
+  bio: [["contenido en", "lim", "Su preservaciÃ³n se mantiene dentro de la capacidad de carga del entorno."],
+        ["contiene", "eco", "Asegura la preservaciÃ³n y el equilibrio de todas las formas de vida que habitan la estructura ecocÃ©ntrica."]],
+  eco: [["abarca", "hidro", "Entiende el agua y la red hidrogrÃ¡fica como la estructura lÃ­quida que ordena todo el territorio."],
         ["abarca", "regen", "Exige sanar el suelo pavimentado."],
-        ["contenido en", "bio", "El equilibrio de todas las formas de vida contiene la estructura ecocéntrica."],
-        ["contenido en", "lim", "Toda la estructura está contenida en la capacidad de carga del entorno."]],
-  hidro: [["contenido en", "eco", "Es parte de la estructura ecocéntrica: la estructura líquida que ordena el territorio."],
-          ["se articula con", "biocl", "El agua se articula con la vegetación y los suelos permeables, que absorben las lluvias."]],
-  biocl: [["se articula con", "hidro", "Recibe el agua de la red hidrográfica: la vegetación y los suelos permeables la absorben y regulan la temperatura de las islas de calor."]],
+        ["contenido en", "bio", "El equilibrio de todas las formas de vida contiene la estructura ecocÃ©ntrica."],
+        ["contenido en", "lim", "Toda la estructura estÃ¡ contenida en la capacidad de carga del entorno."]],
+  hidro: [["contenido en", "eco", "Es parte de la estructura ecocÃ©ntrica: la estructura lÃ­quida que ordena el territorio."],
+          ["se articula con", "biocl", "El agua se articula con la vegetaciÃ³n y los suelos permeables, que absorben las lluvias."]],
+  biocl: [["se articula con", "hidro", "Recibe el agua de la red hidrogrÃ¡fica: la vegetaciÃ³n y los suelos permeables la absorben y regulan la temperatura de las islas de calor."]],
   regen: [["se conecta con", "circ", "Para sanar el suelo pavimentado se apoya en los insumos que la circularidad reintegra al territorio."],
-          ["contenido en", "eco", "Es una de las acciones de intervención dentro del núcleo ecocéntrico."]],
+          ["contenido en", "eco", "Es una de las acciones de intervenciÃ³n dentro del nÃºcleo ecocÃ©ntrico."]],
   circ: [["se conecta con", "regen", "Procesa los desechos del sector y los reintegra como nuevos insumos para sanar el suelo."],
-         ["contenido en", "eco", "Cierra los ciclos de materia dentro del núcleo ecocéntrico."]]
+         ["contenido en", "eco", "Cierra los ciclos de materia dentro del nÃºcleo ecocÃ©ntrico."]]
 };
 
 const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
@@ -151,7 +151,7 @@ function frame(nowMs) {
     ctx.beginPath(); ctx.arc(d.x * W + Math.sin(now * 0.3 + d.p) * 6, d.y * H, d.r, 0, TAU); ctx.fill();
   });
 
-  // rellenos líquidos (la superposición suma luz)
+  // rellenos lÃ­quidos (la superposiciÃ³n suma luz)
   NODES.forEach(n => {
     const g = geo(n, now);
     const al = rel(n.id) ? 1 : 0.35;
@@ -159,7 +159,7 @@ function frame(nowMs) {
     if (n.id === "lim") return;
     const grad = ctx.createRadialGradient(g.x, g.y, g.r * 0.1, g.x, g.y, g.r);
     if (n.id === "bio") {
-      // anillo de vida: banda luminosa entre Biocéntrico y Ecocéntrico
+      // anillo de vida: banda luminosa entre BiocÃ©ntrico y EcocÃ©ntrico
       grad.addColorStop(0.8, rgba(n.rgb, 0)); grad.addColorStop(1, rgba(n.rgb, 0.16 * al));
     } else if (n.id === "eco") {
       grad.addColorStop(0, rgba(n.rgb, 0.03 * al)); grad.addColorStop(1, rgba(n.rgb, (0.14 + 0.1 * p) * al));
@@ -189,7 +189,7 @@ function frame(nowMs) {
     const col = (f.type === "orbit" ? byId[f.id] : f.from).rgb;
 
     if (f.type === "bez") {
-      // guía tenue del cauce
+      // guÃ­a tenue del cauce
       ctx.strokeStyle = rgba(col, 0.12 * dim); ctx.lineWidth = 1.2; ctx.beginPath();
       for (let i = 0; i <= 30; i++) { const p = flowPoint(f, i / 30, now); i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); }
       ctx.stroke();
@@ -227,9 +227,9 @@ function frame(nowMs) {
     ctx.fillStyle = `rgba(236,241,247,${al})`; ctx.fillText(txt, x, y);
   };
   const G = id => geo(byId[id], now);
-  label("Límites Ecológicos", G("lim").x, G("lim").y - G("lim").r, byId.lim, fs * 0.92, 600, true);
-  label("Biocéntrico", G("bio").x, G("bio").y + G("bio").r, byId.bio, fs * 0.92, 600, true);
-  label("Ecocéntrico", G("eco").x, G("eco").y - G("eco").r * 0.84, byId.eco, fs * 0.92, 600, true);
+  label("LÃ­mites EcolÃ³gicos", G("lim").x, G("lim").y - G("lim").r, byId.lim, fs * 0.92, 600, true);
+  label("BiocÃ©ntrico", G("bio").x, G("bio").y + G("bio").r, byId.bio, fs * 0.92, 600, true);
+  label("EcocÃ©ntrico", G("eco").x, G("eco").y - G("eco").r * 0.84, byId.eco, fs * 0.92, 600, true);
   ["hidro", "biocl", "regen", "circ"].forEach(id => {
     const g = G(id), n = byId[id];
     const bump = id === "biocl" ? -g.r * 0.12 : 0;
@@ -239,7 +239,7 @@ function frame(nowMs) {
   requestAnimationFrame(frame);
 }
 
-/* ---------- Interacción ---------- */
+/* ---------- InteracciÃ³n ---------- */
 
 function pick(x, y) {
   const now = performance.now() / 1000;
@@ -299,3 +299,4 @@ document.getElementById("close").addEventListener("click", () => select(null));
 window.addEventListener("keydown", e => { if (e.key === "Escape") select(null); });
 
 requestAnimationFrame(frame);
+
