@@ -2,31 +2,30 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Macro Modelos</title>
-<meta name="description" content="Laboratorio interactivo de modelos macroeconómicos: IS-LM, OA-DA, Solow y Mundell-Fleming.">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Red de Macromodelos</title>
+<meta name="description" content="Red dinámica de siete macromodelos ecocéntricos para el territorio de Kennedy.">
+<meta name="theme-color" content="#000000">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header class="top">
-  <div class="wrap">
-    <p class="kicker">Macroeconomía</p>
-    <h1>Macro Modelos</h1>
-    <p class="lead">Modelos macroeconómicos con parámetros ajustables. Mueve los controles y compara el nuevo equilibrio (línea sólida) contra el equilibrio base (línea punteada).</p>
-  </div>
+<canvas id="net" aria-label="Red animada de los siete macromodelos ecocéntricos"></canvas>
+
+<header class="head">
+  <p class="kicker">Kennedy · Humedal El Burro</p>
+  <h1>Red de Macromodelos Ecocéntricos</h1>
+  <div class="chips" id="chips" role="group" aria-label="Macromodelos"></div>
 </header>
 
-<nav class="tabs" aria-label="Modelos">
-  <div class="wrap">
-    <div class="tablist" id="tablist" role="tablist"></div>
-  </div>
-</nav>
+<aside class="panel" id="panel" aria-live="polite" hidden>
+  <button class="close" id="close" type="button" aria-label="Cerrar">×</button>
+  <h2 id="p-title"></h2>
+  <p id="p-desc" class="desc"></p>
+  <h3>Conexiones</h3>
+  <ul id="p-links"></ul>
+</aside>
 
-<main class="wrap" id="main"></main>
-
-<footer class="wrap foot">
-  <p>Modelos simplificados con formas funcionales lineales (Cobb‑Douglas en Solow), con fines didácticos. Los valores son unidades arbitrarias.</p>
-</footer>
+<p class="hint" id="hint">Toca un modelo para ver sus conexiones · arrastra para moverlo</p>
 
 <script src="app.js"></script>
 </body>
