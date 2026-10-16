@@ -4,19 +4,19 @@
    Geometría en unidades de R (radio del círculo exterior = 1), centro (0,0). */
 
 const NODES = [
-  { id: "lim", name: "Límites Ecológicos", rgb: [148, 163, 184], cx: 0, cy: 0, r: 1.0, ring: true,
+  { id: "lim", name: "Límites Ecológicos", rgb: [139, 134, 120], cx: 0, cy: 0, r: 1.0, ring: true,
     desc: "Contiene toda la estructura: fija la capacidad de carga del entorno." },
-  { id: "bio", name: "Biocéntrico", rgb: [129, 140, 248], cx: 0, cy: 0, r: 0.87, ring: true,
+  { id: "bio", name: "Biocéntrico", rgb: [196, 163, 105], cx: 0, cy: 0, r: 0.87, ring: true,
     desc: "Asegura la preservación y el equilibrio de todas las formas de vida en el territorio." },
-  { id: "eco", name: "Ecocéntrico", rgb: [45, 212, 191], cx: 0, cy: 0, r: 0.74,
+  { id: "eco", name: "Ecocéntrico", rgb: [78, 150, 139], cx: 0, cy: 0, r: 0.74,
     desc: "Punto de partida: la naturaleza como eje ordenador. Abarca a los demás macromodelos del territorio." },
-  { id: "hidro", name: "Hidrocéntrico", rgb: [56, 189, 248], cx: -0.22, cy: -0.14, r: 0.34,
+  { id: "hidro", name: "Hidrocéntrico", rgb: [96, 152, 184], cx: -0.22, cy: -0.14, r: 0.34,
     desc: "El agua y la red hidrográfica son la estructura líquida que ordena todo el territorio." },
-  { id: "biocl", name: "Bioclimático", rgb: [125, 211, 252], cx: 0.2, cy: -0.27, r: 0.24,
+  { id: "biocl", name: "Bioclimático", rgb: [150, 176, 125], cx: 0.2, cy: -0.27, r: 0.24,
     desc: "La vegetación y los suelos permeables absorben las lluvias y regulan la temperatura de las islas de calor." },
-  { id: "regen", name: "Regenerativo", rgb: [167, 139, 250], cx: -0.2, cy: 0.38, r: 0.23,
+  { id: "regen", name: "Regenerativo", rgb: [185, 125, 98], cx: -0.2, cy: 0.38, r: 0.23,
     desc: "Busca sanar el suelo pavimentado y devolverle su capacidad de vida." },
-  { id: "circ", name: "Circularidad", rgb: [232, 121, 249], cx: 0.26, cy: 0.34, r: 0.23,
+  { id: "circ", name: "Circularidad", rgb: [214, 196, 140], cx: 0.26, cy: 0.34, r: 0.23,
     desc: "Procesa los desechos del sector para reintegrarlos como nuevos insumos." }
 ];
 const byId = {};
@@ -58,12 +58,12 @@ function addOrbit(id, r, dir, n, speed, nodes) {
   for (let i = 0; i < n; i++) f.drops.push({ t: i / n + rand(0, 0.03), v: speed * rand(0.9, 1.1) });
   FLOWS.push(f);
 }
-addBez("hidro", "biocl", 0.05, 4, 0.2);
-addBez("regen", "circ", -0.16, 3, 0.18);
-addBez("circ", "regen", -0.16, 3, 0.18);
-addOrbit("lim", 1.0, 1, 6, 0.02, ["lim"]);
-addOrbit("bio", 0.87, -1, 7, 0.026, ["bio"]);
-addOrbit("eco", 0.74, 1, 6, 0.032, ["eco"]);
+addBez("hidro", "biocl", 0.05, 2, 0.09);
+addBez("regen", "circ", -0.16, 2, 0.08);
+addBez("circ", "regen", -0.16, 2, 0.08);
+addOrbit("lim", 1.0, 1, 3, 0.008, ["lim"]);
+addOrbit("bio", 0.87, -1, 4, 0.011, ["bio"]);
+addOrbit("eco", 0.74, 1, 3, 0.014, ["eco"]);
 
 /* ---------- Canvas ---------- */
 
@@ -164,7 +164,7 @@ function frame(nowMs) {
     } else if (n.id === "eco") {
       grad.addColorStop(0, rgba(n.rgb, 0.03 * al)); grad.addColorStop(1, rgba(n.rgb, (0.14 + 0.1 * p) * al));
     } else {
-      grad.addColorStop(0, rgba(n.rgb, (0.1 + 0.15 * p) * al)); grad.addColorStop(1, rgba(n.rgb, (0.34 + 0.2 * p) * al));
+      grad.addColorStop(0, rgba(n.rgb, (0.08 + 0.1 * p) * al)); grad.addColorStop(1, rgba(n.rgb, (0.24 + 0.14 * p) * al));
     }
     ctx.fillStyle = grad; blobPath(n, g, now); ctx.fill();
   });
@@ -204,14 +204,14 @@ function frame(nowMs) {
         let tt = d.t - span * i / trail;
         if (tt < 0) { if (f.type === "bez") continue; tt += 1; }
         const q = 1 - i / trail, p = flowPoint(f, tt, now);
-        ctx.fillStyle = rgba(col, 0.5 * q * q * dim);
-        ctx.beginPath(); ctx.arc(p[0], p[1], 0.8 + 2.6 * q, 0, TAU); ctx.fill();
+        ctx.fillStyle = rgba(col, 0.4 * q * q * dim);
+        ctx.beginPath(); ctx.arc(p[0], p[1], 0.6 + 1.9 * q, 0, TAU); ctx.fill();
       }
-      const gl = ctx.createRadialGradient(head[0], head[1], 0, head[0], head[1], 10);
-      gl.addColorStop(0, rgba(col, 0.55 * dim)); gl.addColorStop(1, rgba(col, 0));
-      ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(head[0], head[1], 10, 0, TAU); ctx.fill();
-      ctx.fillStyle = `rgba(255,255,255,${0.9 * dim})`;
-      ctx.beginPath(); ctx.arc(head[0], head[1], 2.2, 0, TAU); ctx.fill();
+      const gl = ctx.createRadialGradient(head[0], head[1], 0, head[0], head[1], 8);
+      gl.addColorStop(0, rgba(col, 0.35 * dim)); gl.addColorStop(1, rgba(col, 0));
+      ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(head[0], head[1], 8, 0, TAU); ctx.fill();
+      ctx.fillStyle = `rgba(245,240,225,${0.8 * dim})`;
+      ctx.beginPath(); ctx.arc(head[0], head[1], 1.8, 0, TAU); ctx.fill();
     });
   });
 
