@@ -34,8 +34,21 @@ const LINKS = [
   { source: "com", target: "lim", sv: "se ajusta a", tv: "ajusta a",
     text: "Toda la dinámica ajusta el transporte de carga, la logística y la movilidad dentro de los límites ecológicos." },
   { source: "lim", target: "bio", sv: "se mantiene bajo", tv: "enmarca a",
-    text: "Garantiza que la intensidad del comercio y las dinámicas populares coexistan en equilibrio, asegurando la continuidad de todas las formas de vida." }
+    text: "Garantiza que la intensidad del comercio y las dinámicas populares coexistan en equilibrio, asegurando la continuidad de todas las formas de vida." },
+  { source: "eco", target: "regen", sv: "se articula con", tv: "se articula con",
+    text: "Para permitir que los flujos naturales vuelvan a conectarse, el núcleo ecocéntrico se articula con la regeneración activa de los ecosistemas." },
+  { source: "circ", target: "regen", sv: "alimenta a", tv: "se nutre de",
+    text: "Los residuos orgánicos vuelven como nuevos insumos dentro del ciclo local, alimentando la regeneración del entorno." }
 ];
+// Toda la dinámica opera dentro de los Límites Ecológicos y se orienta al Biocéntrico
+["eco", "hidro", "regen", "circ"].forEach(id => {
+  LINKS.push({ source: id, target: "lim", sv: "opera dentro de", tv: "contiene a",
+    text: "Su dinámica se ajusta a los límites ecológicos: transporte de carga, logística y movilidad incluidos." });
+});
+["eco", "hidro", "regen", "circ", "com"].forEach(id => {
+  LINKS.push({ source: id, target: "bio", sv: "se orienta a", tv: "orienta a",
+    text: "Su dinámica se orienta a la preservación y continuidad de todas las formas de vida en Kennedy." });
+});
 
 const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
 const TAU = Math.PI * 2;
@@ -67,14 +80,15 @@ const Graph = ForceGraph()(el)
   .graphData({ nodes: NODES, links: LINKS })
   .nodeRelSize(1)
   .nodeVal(n => n.r * n.r)
-  .cooldownTicks(0)
+  .warmupTicks(220)
+  .cooldownTime(6000)
   .enableNodeDrag(true)
-  .linkCurvature(0.14)
+  .linkCurvature(0.1)
   .linkWidth(l => (linkOn(l) && active() ? 2.6 : 1.6))
   .linkColor(l => (linkOn(l) ? "rgba(205,210,200,0.38)" : "rgba(205,210,200,0.07)"))
-  .linkDirectionalParticles(4)
+  .linkDirectionalParticles(3)
   .linkDirectionalParticleSpeed(0.004)
-  .linkDirectionalParticleWidth(5.5)
+  .linkDirectionalParticleWidth(5)
   .linkDirectionalParticleColor(l => rgba(l.source.rgb, linkOn(l) ? 0.95 : 0.2))
   .nodeCanvasObject((n, ctx, k) => {
     const a = active();
@@ -96,16 +110,11 @@ const Graph = ForceGraph()(el)
   .onNodeClick(n => { document.getElementById("hint").classList.add("off"); select(selected === n.id ? null : n.id); })
   .onBackgroundClick(() => { if (selected) select(null); });
 
-// Posiciones fijas y ordenadas; se giran en pantallas verticales
-function place() {
-  const portrait = el.clientWidth < el.clientHeight;
-  NODES.forEach(n => {
-    const [x, y] = n.p;
-    n.fx = (portrait ? y * 1.15 : x) * SCALE;
-    n.fy = (portrait ? x : y * 1.15) * SCALE;
-    n.x = n.fx; n.y = n.fy;
-  });
-}
+// Fuerzas: los vínculos atraen, los nodos se repelen; la red se organiza sola
+Graph.d3Force("charge").strength(-620);
+Graph.d3Force("link").distance(150).strength(0.35);
+// Posiciones iniciales en cadena (Ecocéntrico → Biocéntrico) para que la disposición sea estable
+NODES.forEach(n => { n.x = n.p[0] * SCALE; n.y = n.p[1] * SCALE * 1.4; });
 
 function fit(ms) { Graph.zoomToFit(ms, 54); }
 
@@ -120,7 +129,7 @@ function area() {
   Graph.width(W - left).height(H - top - bottom);
 }
 
-function relayout(ms) { area(); place(); Graph.graphData({ nodes: NODES, links: LINKS }); setTimeout(() => fit(ms), 30); }
+function relayout(ms) { area(); setTimeout(() => fit(ms), 30); }
 window.addEventListener("resize", () => relayout(0));
 
 /* ---------- Panel y chips ---------- */
